@@ -359,12 +359,18 @@ RCT_EXPORT_METHOD(setGenericPasswordForOptions:(NSDictionary *)options
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
   NSString *service = serviceValue(options);
-  NSDictionary *attributes = attributes = @{
+  NSString *accessGroup = accessGroupValue(options);
+  
+  NSMutableDictionary *attributes = attributes = [NSMutableDictionary dictionaryWithDictionary:@{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassGenericPassword),
     (__bridge NSString *)kSecAttrService: service,
     (__bridge NSString *)kSecAttrAccount: username,
     (__bridge NSString *)kSecValueData: [password dataUsingEncoding:NSUTF8StringEncoding]
-  };
+  }];
+        
+  if (accessGroup != nil) {
+      attributes[(__bridge NSString *)kSecAttrAccessGroup] = accessGroup;
+  }
 
   [self deletePasswordsForService:service];
 
@@ -377,15 +383,20 @@ RCT_EXPORT_METHOD(getGenericPasswordForOptions:(NSDictionary * __nullable)option
 {
   NSString *service = serviceValue(options);
   NSString *authenticationPrompt = authenticationPromptValue(options);
+  NSString *accessGroup = accessGroupValue(options);
 
-  NSDictionary *query = @{
+  NSMutableDictionary *query = [NSMutableDictionary dictionaryWithDictionary:@{
     (__bridge NSString *)kSecClass: (__bridge id)(kSecClassGenericPassword),
     (__bridge NSString *)kSecAttrService: service,
     (__bridge NSString *)kSecReturnAttributes: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecReturnData: (__bridge id)kCFBooleanTrue,
     (__bridge NSString *)kSecMatchLimit: (__bridge NSString *)kSecMatchLimitOne,
     (__bridge NSString *)kSecUseOperationPrompt: authenticationPrompt
-  };
+  }];
+    
+  if (accessGroup != nil) {
+    query[(__bridge NSString *)kSecAttrAccessGroup] = accessGroup;
+  }
 
   // Look up service in the keychain
   NSDictionary *found = nil;
